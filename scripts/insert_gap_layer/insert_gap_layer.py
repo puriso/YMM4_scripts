@@ -2,27 +2,14 @@
 #
 # 使い方:
 #
-#   # 変更予定だけ確認
-#   # デフォルト: レイヤー01 / 空白12フレーム / 前のセリフ末尾が 。！？
-#   python insert_gap_layer.py
-#
-#   # 実際に反映
-#   python insert_gap_layer.py --apply
+#   # デフォルト: レイヤー01 / 空白12フレーム
+#   python scripts\insert_gap_layer\insert_gap_layer.py
 #
 #   # レイヤー02に対して実行
-#   python insert_gap_layer.py --layer 02 --apply
+#   python scripts\insert_gap_layer\insert_gap_layer.py --layer 02
 #
 #   # 空白を24フレームにする
-#   python insert_gap_layer.py --layer 01 --gap 24 --apply
-#
-#   # 末尾判定文字を変える
-#   python insert_gap_layer.py --endings "。！？!?" --apply
-#
-#   # 常にgapを入れる旧仕様で実行
-#   python insert_gap_layer.py --gap-mode always --apply
-#
-#   # 反映後にYMM4プロジェクトも保存
-#   python insert_gap_layer.py --apply --save
+#   python scripts\insert_gap_layer\insert_gap_layer.py --layer 01 --gap 24
 #
 # 前提:
 #   YMM4を起動して、MCP連携サーバーを起動しておくこと。
@@ -31,24 +18,19 @@
 # 動作:
 #   指定レイヤー上のセリフアイテムをフレーム順に並べます。
 #
-#   gap-mode が punctuation の場合:
-#     前のセリフ末尾が 。 / ！ / ？ の場合だけ gap フレームを入れます。
-#     セリフ末尾が 」 の場合は、その一個前の文字で判定します。
+#   前のセリフ末尾が 。 / ！ / ？ の場合だけ gap フレームを入れます。
+#   セリフ末尾が 」 の場合は、その一個前の文字で判定します。
 #
-#     例:
-#       今日は速い。      => gapを入れる
-#       今日は速い！      => gapを入れる
-#       今日は速い？      => gapを入れる
-#       「今日は速い。」  => gapを入れる
-#       「今日は速い」    => gapを入れない
-#       今日は速い        => gapを入れない
-#
-#   gap-mode が always の場合:
-#     前のセリフ末尾に関係なく、常に gap フレームを入れます。
+#   例:
+#     今日は速い。      => gapを入れる
+#     今日は速い！      => gapを入れる
+#     今日は速い？      => gapを入れる
+#     「今日は速い。」  => gapを入れる
+#     「今日は速い」    => gapを入れない
+#     今日は速い        => gapを入れない
 #
 # 注意:
-#   --apply を付けない限り、実際には変更しません。
-#   まず python insert_gap_layer.py だけで変更予定を確認するのがおすすめです。
+#   実行するとYMM4へ反映し、プロジェクトも保存します。
 
 import argparse
 import json
@@ -263,22 +245,12 @@ def effective_last_char(text: str) -> str:
     return stripped[-1]
 
 
-def should_insert_gap_after(
-    item: dict[str, Any],
-    gap_mode: str,
-    endings: str,
-) -> bool:
+def should_insert_gap_after(item: dict[str, Any]) -> bool:
     """
     このセリフの後ろに gap を入れるか判定する。
     """
-    if gap_mode == "always":
-        return True
-
-    if gap_mode == "punctuation":
-        last_char = effective_last_char(get_text(item))
-        return last_char in set(endings)
-
-    raise RuntimeError(f"未知の gap_mode です: {gap_mode}")
+    last_char = effective_last_char(get_text(item))
+    return last_char in set(DEFAULT_ENDINGS)
 
 
 def update_item_frame_by_prop_endpoint(
@@ -357,19 +329,12 @@ def build_changes(
     speeches: list[dict[str, Any]],
     layer: int,
     gap: int,
-    gap_mode: str,
-    endings: str,
 ) -> list[dict[str, Any]]:
     """
-    変更予定を作る。
+    変更内容を作る。
 
-    gap_mode == punctuation:
-      前のセリフが指定した末尾文字で終わる場合だけ gap を入れる。
-      末尾が 」 の場合は、その一個前の文字で判定する。
-
-    gap_mode == always:
-      常に gap を入れる。
-
+    前のセリフが 。！？ で終わる場合だけ gap を入れる。
+    末尾が 」 の場合は、その一個前の文字で判定する。
     gap を入れない場合でも、セリフ同士が重なる場合は
     前のセリフの終了位置までは最低限ずらす。
     """
@@ -391,11 +356,7 @@ def build_changes(
 
         prev_end_frame = prev_frame + prev_length
 
-        insert_gap = should_insert_gap_after(
-            item=prev,
-            gap_mode=gap_mode,
-            endings=endings,
-        )
+        insert_gap = should_insert_gap_after(prev)
 
         actual_gap = gap if insert_gap else 0
         required_frame = prev_end_frame + actual_gap
@@ -429,16 +390,11 @@ def print_changes(
     changes: list[dict[str, Any]],
     layer: int,
     gap: int,
-    gap_mode: str,
-    endings: str,
 ) -> None:
     print(f"対象レイヤー: {layer:02d}")
     print(f"空白フレーム: {gap}")
-    print(f"gapモード: {gap_mode}")
-
-    if gap_mode == "punctuation":
-        print(f"gap挿入条件: 前のセリフ末尾が {', '.join(endings)}")
-        print("末尾が 」 の場合は一個前の文字で判定")
+    print(f"gap挿入条件: 前のセリフ末尾が {', '.join(DEFAULT_ENDINGS)}")
+    print("末尾が 」 の場合は一個前の文字で判定")
 
     print()
 
@@ -446,7 +402,7 @@ def print_changes(
         print(f"レイヤー{layer:02d}に変更対象はありません。")
         return
 
-    print("変更予定:")
+    print("変更内容:")
 
     for change in changes:
         if change["insert_gap"]:
@@ -487,47 +443,10 @@ def main() -> int:
         help="セリフ間に入れる最低空白フレーム数。デフォルトは12。",
     )
 
-    parser.add_argument(
-        "--gap-mode",
-        choices=["punctuation", "always"],
-        default="punctuation",
-        help=(
-            "gapの入れ方。"
-            "punctuation は前のセリフ末尾が指定文字の場合だけgapを入れる。"
-            "always は常にgapを入れる。"
-            "デフォルトは punctuation。"
-        ),
-    )
-
-    parser.add_argument(
-        "--endings",
-        default=DEFAULT_ENDINGS,
-        help=(
-            "gapを入れる末尾文字。"
-            "デフォルトは '。！？'。"
-            "半角も含めたい場合は --endings \"。！？!?\" のように指定。"
-        ),
-    )
-
-    parser.add_argument(
-        "--apply",
-        action="store_true",
-        help="実際にYMM4へ反映する。付けない場合は変更予定の表示のみ。",
-    )
-
-    parser.add_argument(
-        "--save",
-        action="store_true",
-        help="反映後にYMM4プロジェクトを保存する。",
-    )
-
     args = parser.parse_args()
 
     if args.gap < 0:
         raise RuntimeError("--gap は0以上で指定してください")
-
-    if args.endings == "":
-        raise RuntimeError("--endings は空文字にできません")
 
     items = get_items(args.base_url)
 
@@ -545,25 +464,15 @@ def main() -> int:
         speeches=speeches,
         layer=args.layer,
         gap=args.gap,
-        gap_mode=args.gap_mode,
-        endings=args.endings,
     )
 
     print_changes(
         changes=changes,
         layer=args.layer,
         gap=args.gap,
-        gap_mode=args.gap_mode,
-        endings=args.endings,
     )
 
     if not changes:
-        return 0
-
-    if not args.apply:
-        print()
-        print("まだ反映していません。")
-        print("反映する場合は --apply を付けて実行してください。")
         return 0
 
     print()
@@ -583,13 +492,9 @@ def main() -> int:
             f"response={res}"
         )
 
-    if args.save:
-        save_res = save_project(args.base_url)
-        print()
-        print(f"保存しました: {save_res}")
-    else:
-        print()
-        print("反映しました。必要ならYMM4側で保存してください。")
+    save_res = save_project(args.base_url)
+    print()
+    print(f"保存しました: {save_res}")
 
     return 0
 

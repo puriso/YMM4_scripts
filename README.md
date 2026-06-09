@@ -7,28 +7,29 @@ YukkuriMovieMaker4 (YMM4) の編集作業を補助するスクリプト集です
 - `scripts/` 配下のスクリプトは、基本的に Python で書きます。
 - 依存関係はできるだけ Python 標準ライブラリに寄せます。
 - 外部パッケージが必要な場合は、理由とインストール方法を README またはスクリプト冒頭に書きます。
-- YMM4 プロジェクトを変更する処理は、まず dry-run / preview で確認できるようにします。
-- 実際に変更する操作は `--apply` など明示的なオプションを付けたときだけ実行します。
+- YMM4 プロジェクトを変更する処理は、実行前に対象件数と変更内容が分かるようにします。
+- 即反映・即保存するスクリプトは、その動作を個別 README に明記します。
 
 ## 使い方
 
 YMM4 と MCP 連携サーバーを起動してから、対象のスクリプトを実行します。
 
 ```powershell
-python scripts\insert_gap_layer.py
-python scripts\insert_gap_layer.py --apply
+python scripts\insert_gap_layer\insert_gap_layer.py
+python scripts\insert_gap_layer\insert_gap_layer.py --layer 02 --gap 24
 ```
 
 各スクリプトの詳しい引数や挙動は、ファイル冒頭のコメントと `--help` を確認してください。
 
 ```powershell
-python scripts\insert_gap_layer.py --help
+python scripts\insert_gap_layer\insert_gap_layer.py --help
 ```
 
 ## スクリプト一覧
 
-- `scripts/insert_gap_layer.py`
+- `scripts/insert_gap_layer/`
   - 指定レイヤー上のセリフアイテム間に、必要な空白フレームを作るための補助スクリプトです。
+  - 詳細な仕様と使い方は `scripts/insert_gap_layer/README.md` を確認してください。
 
 ## 開発メモ
 
