@@ -11,13 +11,14 @@ YMM4 .ymmp 直接編集版:
   4. 問題なければ --apply を付けて実行する
 
 実行例:
-  python scripts\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3
-  python scripts\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3 --apply
+  python scripts\\split_group_direct_ymmp\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3
+  python scripts\\split_group_direct_ymmp\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3 --apply
 
 注意:
   - デフォルトは dry-run です。
   - --apply 時は .backup_YYYYMMDD_HHMMSS.ymmp を自動作成してから上書きします。
   - 中性.* にかぶっていない区間の GroupItem は作りません。
+  - 対象セリフの終端は、余韻カットと次のセリフ開始位置の早い方で打ち切ります。
   - 元 GroupItem の X/Y 移動、レイヤー範囲、既存エフェクトなどはそのまま引き継ぎます。
 """
 
@@ -39,6 +40,7 @@ TARGET_GROUP_MEMO = "t"
 SPEAKER_REGEX = r"中性.*"
 AUTO_MEMO_BOUNCE = "auto:t:neutral_bounce"
 DEFAULT_VOICE_TAIL_TRIM = 12
+DEFAULT_NEXT_VOICE_GAP = 0
 
 
 @dataclass(frozen=True)
@@ -326,6 +328,35 @@ def split_group_range(
     return merge_ranges(clipped_ranges)
 
 
+def build_voice_ranges(
+    *,
+    target_voices: list[TimelineItem],
+    all_voices: list[TimelineItem],
+    tail_trim: int,
+    next_voice_gap: int,
+) -> list[tuple[int, int]]:
+    voice_starts = sorted({voice.frame for voice in all_voices})
+    ranges: list[tuple[int, int]] = []
+
+    for voice in sorted(target_voices, key=lambda item: item.frame):
+        end = max(voice.frame, voice.end - tail_trim)
+
+        next_starts = [
+            frame
+            for frame in voice_starts
+            if frame > voice.frame
+        ]
+
+        if next_starts:
+            next_voice_start = next_starts[0]
+            end = min(end, max(voice.frame, next_voice_start - next_voice_gap))
+
+        if voice.frame < end:
+            ranges.append((voice.frame, end))
+
+    return ranges
+
+
 def build_split_items(
     group: TimelineItem,
     segments: list[tuple[int, int]],
@@ -412,6 +443,16 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--next-voice-gap",
+        type=int,
+        default=DEFAULT_NEXT_VOICE_GAP,
+        help=(
+            "次のセリフ開始前に空けるフレーム数。"
+            "中性セリフの余韻が次のセリフに被るのを避けるため、"
+            f"対象区間は次のセリフ開始 - この値でも打ち切ります。デフォルト: {DEFAULT_NEXT_VOICE_GAP}"
+        ),
+    )
+    parser.add_argument(
         "--apply",
         action="store_true",
         help="実際に .ymmp を上書きします。指定しない場合はdry-runです。",
@@ -469,6 +510,14 @@ def main() -> int:
             and item.length > 0
         )
     ]
+    all_voices = [
+        item for item in items
+        if (
+            is_voice_item(item)
+            and (not args.voice_layers or item.layer in args.voice_layers)
+            and item.length > 0
+        )
+    ]
 
     print(f"取得アイテム数: {len(items)}")
     print(f"対象グループ制御: {len(target_groups)}件")
@@ -483,17 +532,20 @@ def main() -> int:
         return 1
 
     tail_trim = max(0, args.voice_tail_trim)
-    voice_ranges = [
-        (voice.frame, max(voice.frame, voice.end - tail_trim))
-        for voice in target_voices
-        if voice.frame < max(voice.frame, voice.end - tail_trim)
-    ]
+    next_voice_gap = max(0, args.next_voice_gap)
+    voice_ranges = build_voice_ranges(
+        target_voices=target_voices,
+        all_voices=all_voices,
+        tail_trim=tail_trim,
+        next_voice_gap=next_voice_gap,
+    )
 
     if not voice_ranges:
         print("余韻カット後に対象セリフ区間が残りません。--voice-tail-trim を小さくしてください。")
         return 1
 
     print(f"セリフ余韻カット: {tail_trim}f")
+    print(f"次セリフ手前カット: {next_voice_gap}f")
 
     plan: list[tuple[TimelineItem, list[tuple[int, int]]]] = []
 
