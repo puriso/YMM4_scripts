@@ -16,7 +16,7 @@ YMM4 .ymmp 直接編集版:
 
 注意:
   - デフォルトは dry-run です。
-  - --apply 時は .bak を自動作成してから上書きします。
+  - --apply 時は .backup_YYYYMMDD_HHMMSS.ymmp を自動作成してから上書きします。
   - 中性.* にかぶっていない区間の GroupItem は作りません。
   - 元 GroupItem の X/Y 移動、レイヤー範囲、既存エフェクトなどはそのまま引き継ぎます。
 """
@@ -355,7 +355,7 @@ def build_split_items(
 
 def make_backup_path(project_path: Path) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return project_path.with_name(f"{project_path.name}.{timestamp}.bak")
+    return project_path.with_name(f"{project_path.stem}.backup_{timestamp}{project_path.suffix}")
 
 
 def load_json_file(path: Path) -> Any:
