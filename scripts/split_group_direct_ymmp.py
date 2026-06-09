@@ -280,13 +280,7 @@ def memo_has_token(memo: str, token: str) -> bool:
 
 
 def speaker_matches(item: TimelineItem, speaker_re: re.Pattern[str]) -> bool:
-    if item.character and speaker_re.match(item.character):
-        return True
-
-    if item.text and speaker_re.match(item.text):
-        return True
-
-    return speaker_re.search(item_blob(item.raw)) is not None
+    return bool(item.character and speaker_re.match(item.character))
 
 
 def overlap(a_start: int, a_end: int, b_start: int, b_end: int) -> tuple[int, int] | None:
@@ -363,8 +357,15 @@ def load_json_file(path: Path) -> Any:
         return json.load(f)
 
 
-def write_json_file(path: Path, data: Any) -> None:
-    with path.open("w", encoding="utf-8", newline="\n") as f:
+def has_utf8_bom(path: Path) -> bool:
+    with path.open("rb") as f:
+        return f.read(3) == b"\xef\xbb\xbf"
+
+
+def write_json_file(path: Path, data: Any, *, preserve_bom: bool) -> None:
+    encoding = "utf-8-sig" if preserve_bom else "utf-8"
+
+    with path.open("w", encoding=encoding, newline="\n") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
 
@@ -430,6 +431,8 @@ def main() -> int:
     if args.apply:
         print("注意: YMM4で対象プロジェクトを閉じてから実行してください。")
 
+    preserve_bom = has_utf8_bom(project_path)
+
     try:
         project = load_json_file(project_path)
     except Exception as e:
@@ -439,7 +442,12 @@ def main() -> int:
 
     items = iter_timeline_items(project)
 
-    speaker_re = re.compile(args.speaker_regex)
+    try:
+        speaker_re = re.compile(args.speaker_regex)
+    except re.error as e:
+        print(f"--speaker-regex が不正です: {args.speaker_regex!r}")
+        print(e)
+        return 1
 
     target_groups = [
         item for item in items
@@ -539,7 +547,7 @@ def main() -> int:
 
     backup_path = make_backup_path(project_path)
     shutil.copy2(project_path, backup_path)
-    write_json_file(project_path, project)
+    write_json_file(project_path, project, preserve_bom=preserve_bom)
 
     print()
     print(f"バックアップ作成: {backup_path}")
