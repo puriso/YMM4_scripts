@@ -4,15 +4,11 @@ on:
   pull_request:
     paths:
       - "scripts/**/*.py"
-      - "pyproject.toml"
-      - ".github/workflows/basic-checks.yml"
   push:
     branches:
       - main
     paths:
       - "scripts/**/*.py"
-      - "pyproject.toml"
-      - ".github/workflows/basic-checks.yml"
 
 permissions:
   contents: read
