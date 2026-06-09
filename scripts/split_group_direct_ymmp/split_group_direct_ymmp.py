@@ -11,8 +11,8 @@ YMM4 .ymmp 直接編集版:
   4. 問題なければ --apply を付けて実行する
 
 実行例:
-  python scripts\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3
-  python scripts\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3 --apply
+  python scripts\\split_group_direct_ymmp\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3
+  python scripts\\split_group_direct_ymmp\\split_group_direct_ymmp.py --project "C:\\path\\project.ymmp" --group-layers 1 --voice-layers 3 --apply
 
 注意:
   - デフォルトは dry-run です。
