@@ -42,6 +42,7 @@ python scripts\insert_gap_layer\insert_gap_layer.py --help
   - `.ymmp` を直接編集し、対象 GroupItem を `中性.*` のセリフ区間だけに合わせて複数の GroupItem に分割するスクリプトです。
   - デフォルトは dry-run です。`--apply` 時は `.backup_YYYYMMDD_HHMMSS.ymmp` を自動作成してから上書きします。
   - `中性.*` と重ならない区間の GroupItem は作りません。セリフ末尾の余韻は `--voice-tail-trim` でバウンス対象から外します。
+  - 中性セリフの余韻が次のセリフへ被る場合に備えて、対象区間は次のセリフ開始位置でも打ち切ります。必要なら `--next-voice-gap` で次のセリフ手前に追加の空白を作れます。
   - 分割後の GroupItem は、元の X/Y 移動、レイヤー範囲、既存エフェクトなどを引き継ぎます。
 
 ## 開発メモ
