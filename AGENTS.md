@@ -5,6 +5,7 @@
 - このリポジトリの `scripts/` は、基本的に Python で実装する。
 - まず既存スクリプトの書き方に合わせ、必要以上に新しい構成や依存関係を増やさない。
 - YMM4 MCP 連携を前提にする処理では、接続先 URL、対象レイヤー、対象文字列などを変更しやすい場所に置く。
+- YMM4 MCP サーバの仕様は、`SCPgamerscp/ymm4MCP`（https://github.com/SCPgamerscp/ymm4MCP）を基準にする。
 
 ## Python スクリプトの書き方
 
