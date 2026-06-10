@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YMM4 Scripts Launcher</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">Y4</span>
+        <div>
+          <h1>Scripts</h1>
+          <p>YMM4 helper launcher</p>
+        </div>
+      </div>
+      <nav id="scriptList" class="script-list" aria-label="script list"></nav>
+    </aside>
+
+    <section class="workspace">
+      <header class="script-header">
+        <div>
+          <p class="eyebrow">selected script</p>
+          <h2 id="scriptTitle">Loading...</h2>
+          <p id="scriptDescription" class="description"></p>
+        </div>
+        <div id="statusBadge" class="status-badge">待機中</div>
+      </header>
+
+      <section id="warningBox" class="warning hidden"></section>
+
+      <form id="optionsForm" class="options-grid"></form>
+
+      <div class="actions">
+        <button id="copyCommandButton" type="button" class="button secondary">コマンドをコピー</button>
+        <button id="stopButton" type="button" class="button ghost" disabled>停止</button>
+        <button id="runButton" type="button" class="button primary">実行</button>
+      </div>
+
+      <section class="log-panel">
+        <div class="log-header">
+          <h3>Log</h3>
+          <span id="logPath"></span>
+        </div>
+        <pre id="logOutput" class="log-output">ログはここに表示されます。</pre>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
