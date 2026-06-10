@@ -25,6 +25,14 @@ python scripts\insert_gap_layer\insert_gap_layer.py --layer 02 --gap 24
 python scripts\insert_gap_layer\insert_gap_layer.py --help
 ```
 
+ボタンと入力欄から実行したい場合は、簡易Web UIを起動できます。
+
+```powershell
+python scripts\script_launcher\script_launcher.py
+```
+
+表示されたローカルURLをブラウザで開いて使います。実行ログは画面に表示され、`logs/script_launcher/` にも保存されます。
+
 ## 重要: `.ymmp` 直接編集について
 
 `scripts/split_group_direct_ymmp/` は MCP 経由ではなく、YMM4 の `.ymmp` ファイルを直接読み書きします。
@@ -35,6 +43,11 @@ python scripts\insert_gap_layer\insert_gap_layer.py --help
 
 ## スクリプト一覧
 
+- `scripts/script_launcher/`
+  - 各種スクリプトを選択し、オプションを入力して実行するための簡易Web UIです。
+  - 画面は `html + css + シンプルなjs` で、ローカルの標準ライブラリHTTPサーバーから配信します。
+  - 実行ログを画面と `logs/script_launcher/` に出力します。
+  - 詳細な仕様と使い方は `scripts/script_launcher/README.md` を確認してください。
 - `scripts/insert_gap_layer/`
   - 指定レイヤー上のセリフアイテム間に、必要な空白フレームを作るための補助スクリプトです。
   - 詳細な仕様と使い方は `scripts/insert_gap_layer/README.md` を確認してください。

@@ -23,6 +23,15 @@
 - ディレクトリ化したスクリプトには、同じディレクトリに `README.md` を置き、仕様、使い方、前提条件、注意点を書く。
 - ルート `README.md` のスクリプト一覧から、ディレクトリ内の `README.md` へ誘導する。
 
+## UI ランチャー
+
+- 各種スクリプトをWeb UIから実行する入口は `scripts/script_launcher/script_launcher.py` に置く。
+- UIはメンテナンスしやすさを優先し、画面は `scripts/script_launcher/web/` の HTML/CSS/シンプルな JavaScript で実装する。
+- ローカルスクリプト実行はブラウザだけではできないため、`scripts/script_launcher/script_launcher.py` の標準ライブラリHTTPサーバー経由で行う。外部パッケージは必要になるまで増やさない。
+- UIへスクリプトを追加する場合は、`SCRIPT_DEFINITIONS` に定義を1件追加し、既存CLIの引数名・既定値と揃える。
+- 新しいスクリプトを追加したら、UIに載せるかユーザーへ確認する。載せる場合は `scripts/script_launcher/README.md` も更新する。
+- UIから実行する処理は、実行コマンド、開始/終了時刻、標準出力、標準エラー、終了コードをログとして確認できるようにする。
+
 ## 安全性
 
 - YMM4 プロジェクトを変更する処理は、原則として変更内容を実行前に表示する。
@@ -41,4 +50,5 @@
 ## 確認
 
 - 変更後は、少なくとも `python <script> --help` または dry-run 実行で構文と表示を確認する。
+- UIランチャーを変更した場合は、`python scripts\script_launcher\script_launcher.py --help` と `python scripts\script_launcher\script_launcher.py --list-scripts` を確認する。
 - YMM4 MCP が必要なスクリプトは、MCP 未起動時のエラー表示が分かりやすいことも確認する。
